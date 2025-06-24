@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: full-stack-fastapi-config
+  labels:
+    app: full-stack-fastapi
+data:
+  first-superuser: "admin@example.com"
+  project-name: "FastAPI Project"
+  environment: "production"

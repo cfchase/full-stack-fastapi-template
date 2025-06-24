@@ -1,0 +1,33 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: full-stack-fastapi
+  labels:
+    app: full-stack-fastapi
+spec:
+  to:
+    kind: Service
+    name: frontend
+    weight: 100
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: full-stack-fastapi-api
+  labels:
+    app: full-stack-fastapi
+spec:
+  to:
+    kind: Service
+    name: backend
+    weight: 100
+  port:
+    targetPort: 8000
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

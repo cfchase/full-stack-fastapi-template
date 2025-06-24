@@ -1,0 +1,41 @@
+# Stage 0, "build-stage", based on Node.js, to build and compile the frontend
+FROM node:20 AS build-stage
+
+WORKDIR /app
+
+COPY package*.json /app/
+
+RUN npm install
+
+COPY ./ /app/
+
+ARG VITE_API_URL=${VITE_API_URL}
+
+RUN npm run build
+
+
+# Stage 1, based on Red Hat UBI nginx, to have only the compiled app, ready for production with nginx
+FROM registry.redhat.io/ubi9/nginx-124:latest
+
+# Copy built files to nginx directory
+COPY --from=build-stage /app/dist/ /opt/app-root/src/
+
+# Copy nginx configuration
+COPY ./nginx-openshift.conf /etc/nginx/nginx.conf
+
+# Fix permissions for OpenShift
+USER root
+RUN mkdir -p /var/cache/nginx /var/log/nginx && \
+    chmod -R g+w /opt/app-root/src/ && \
+    chmod -R g+w /var/cache/nginx /var/run /var/log/nginx && \
+    chgrp -R 0 /opt/app-root/src/ /var/cache/nginx /var/run /var/log/nginx && \
+    chmod -R g=u /opt/app-root/src/ /var/cache/nginx /var/run /var/log/nginx
+
+# Switch back to non-root user
+USER 1001
+
+# Expose port 8080
+EXPOSE 8080
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: full-stack-fastapi
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: full-stack-fastapi
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: full-stack-fastapi
+        component: backend
+    spec:
+      initContainers:
+      - name: prestart
+        image: backend-image
+        command:
+        - bash
+        - scripts/prestart.sh
+        env:
+        - name: POSTGRES_SERVER
+          value: "postgresql"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "app"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: postgres-password
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: secret-key
+        - name: FIRST_SUPERUSER
+          valueFrom:
+            configMapKeyRef:
+              name: full-stack-fastapi-config
+              key: first-superuser
+        - name: FIRST_SUPERUSER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: first-superuser-password
+        - name: PROJECT_NAME
+          value: "FastAPI Project"
+        - name: ENVIRONMENT
+          value: "production"
+        - name: BACKEND_CORS_ORIGINS
+          value: '["http://localhost:3000", "http://localhost:5173"]'
+      containers:
+      - name: backend
+        image: backend-image
+        ports:
+        - containerPort: 8000
+        env:
+        - name: POSTGRES_SERVER
+          value: "postgresql"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "app"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: postgres-password
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: secret-key
+        - name: FIRST_SUPERUSER
+          valueFrom:
+            configMapKeyRef:
+              name: full-stack-fastapi-config
+              key: first-superuser
+        - name: FIRST_SUPERUSER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: full-stack-fastapi-secrets
+              key: first-superuser-password
+        - name: BACKEND_CORS_ORIGINS
+          value: '["http://localhost:3000", "http://localhost:5173"]'
+        - name: PROJECT_NAME
+          value: "FastAPI Project"
+        - name: ENVIRONMENT
+          value: "production"
+        livenessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        # readinessProbe:
+        #   httpGet:
+        #     path: /api/v1/utils/health-check/
+        #     port: 8000
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: full-stack-fastapi
+    component: backend
+spec:
+  ports:
+  - port: 8000
+    targetPort: 8000
+  selector:
+    app: full-stack-fastapi
+    component: backend

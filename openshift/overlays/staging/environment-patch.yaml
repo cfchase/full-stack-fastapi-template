@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: prestart
+        env:
+        - name: ENVIRONMENT
+          value: "staging"
+      containers:
+      - name: backend
+        env:
+        - name: ENVIRONMENT
+          value: "staging"
+        - name: BACKEND_CORS_ORIGINS
+          value: '["http://localhost:3000", "http://localhost:5173", "https://full-stack-fastapi-staging.apps.cluster.local"]'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+spec:
+  template:
+    spec:
+      containers:
+      - name: postgresql
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

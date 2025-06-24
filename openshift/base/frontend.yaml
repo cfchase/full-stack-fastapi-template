@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: full-stack-fastapi
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: full-stack-fastapi
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: full-stack-fastapi
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: frontend-image
+        ports:
+        - containerPort: 8080
+        env:
+        - name: VITE_API_URL
+          value: "http://backend:8000"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 3
+          timeoutSeconds: 3
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        securityContext:
+          capabilities: {}
+          privileged: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: full-stack-fastapi
+    component: frontend
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: full-stack-fastapi
+    component: frontend
